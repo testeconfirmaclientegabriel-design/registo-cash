@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<title>Registo de Clientes</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --panel: #161b22;
+    --panel-2: #1c2230;
+    --border: #2a3140;
+    --border-strong: #3a4356;
+    --text: #e6e8eb;
+    --text-secondary: #8b95a5;
+    --text-muted: #5c6577;
+    --accent: #3dd6c4;
+    --accent-dim: #1f4a44;
+    --danger: #e5534b;
+    --danger-dim: #4a2422;
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif;
+    --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    padding: 32px 20px 60px;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; }
+  header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  header h1 {
+    font-size: 19px;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: 0.2px;
+  }
+  header .count {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+  .panel-title {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+    margin: 0 0 16px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field.full { grid-column: 1 / -1; }
+  label {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  input {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 9px 10px;
+    font-size: 14px;
+    font-family: var(--font-sans);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input.mono { font-family: var(--font-mono); }
+  input:focus { border-color: var(--accent); }
+  input::placeholder { color: var(--text-muted); }
+  select {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 9px 10px;
+    font-size: 14px;
+    font-family: var(--font-sans);
+    outline: none;
+  }
+  select:focus { border-color: var(--accent); }
+  .pass-row { position: relative; }
+  .pass-row input { width: 100%; padding-right: 36px; }
+  .toggle-pass {
+    position: absolute;
+    right: 8px;
+    top: 32px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 12px;
+    font-family: var(--font-sans);
+    padding: 4px;
+  }
+  .toggle-pass:hover { color: var(--text); }
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 18px;
+  }
+  button {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 6px;
+    padding: 9px 16px;
+    cursor: pointer;
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    color: var(--text);
+  }
+  button:hover { background: var(--panel-2); }
+  button.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #062824;
+  }
+  button.primary:hover { background: #35c2b1; }
+  .toolbar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+    align-items: center;
+  }
+  .toolbar input[type="text"] {
+    flex: 1;
+    max-width: 320px;
+  }
+  .toolbar button { font-size: 12px; padding: 7px 12px; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  thead th {
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-muted);
+    font-weight: 600;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  tbody td {
+    padding: 10px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  tbody tr:hover { background: var(--panel-2); }
+  .rec-id {
+    font-family: var(--font-mono);
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+  .mono-cell { font-family: var(--font-mono); font-size: 12.5px; }
+  .masked { letter-spacing: 1px; }
+  .row-actions { display: flex; gap: 6px; }
+  .icon-btn {
+    background: none;
+    border: 1px solid var(--border);
+    padding: 5px 9px;
+    font-size: 11px;
+    border-radius: 5px;
+  }
+  .icon-btn:hover { background: var(--panel-2); }
+  .icon-btn.del:hover { background: var(--danger-dim); border-color: var(--danger); color: var(--danger); }
+  .empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+  .status {
+    font-size: 12px;
+    color: var(--accent);
+    height: 16px;
+    margin-top: 8px;
+    text-align: right;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .status.show { opacity: 1; }
+  .photo-box {
+    margin-bottom: 18px;
+    padding-bottom: 18px;
+    border-bottom: 1px dashed var(--border);
+  }
+  .photo-btn {
+    width: 100%;
+    background: var(--panel-2);
+    border: 1px dashed var(--border-strong);
+    color: var(--text);
+    padding: 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .photo-btn:hover { border-color: var(--accent); background: var(--accent-dim); }
+  .photo-icon { font-size: 16px; }
+  .photo-status {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 8px;
+    text-align: center;
+    min-height: 16px;
+  }
+  .photo-status.working { color: var(--accent); }
+  .photo-status.error { color: var(--danger); }
+  .photo-preview {
+    display: block;
+    max-width: 220px;
+    max-height: 160px;
+    border-radius: 6px;
+    margin: 10px auto 0;
+    border: 1px solid var(--border);
+  }
+  .field.autofilled input { border-color: var(--accent); background: var(--accent-dim); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Registo de clientes</h1>
+    <span class="count" id="countLabel">0 registos</span>
+  </header>
+
+  <div class="panel" id="settingsPanel">
+    <p class="panel-title">Ligação ao Google Sheets</p>
+    <div class="field full">
+      <label for="f-syncurl">URL do Web App (Apps Script)</label>
+      <input type="text" id="f-syncurl" placeholder="https://script.google.com/macros/s/.../exec">
+    </div>
+    <div class="actions" style="margin-top:10px;">
+      <span id="syncStatus" style="font-size:12px;color:var(--text-muted);align-self:center;margin-right:auto;">Não ligado</span>
+      <button type="button" id="saveSyncUrl">Guardar ligação</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <p class="panel-title" id="formTitle">Novo registo</p>
+
+    <div class="photo-box">
+      <button type="button" class="photo-btn" id="photoBtn">
+        <span class="photo-icon">📷</span> Tirar foto da etiqueta
+      </button>
+      <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none;">
+      <div id="photoStatus" class="photo-status"></div>
+      <img id="photoPreview" class="photo-preview" style="display:none;">
+    </div>
+
+    <div class="grid">
+      <div class="field full">
+        <label for="f-nome">Nome do cliente</label>
+        <input type="text" id="f-nome" placeholder="Nome completo" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="f-empresa">Empresa</label>
+        <select id="f-empresa" autocomplete="off">
+          <option value="InforPos">InforPos</option>
+          <option value="MaisHoreca">MaisHoreca</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="f-nif">NIF</label>
+        <input type="text" id="f-nif" class="mono" placeholder="000000000" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="f-data">Data</label>
+        <input type="date" id="f-data" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="f-serial">Serial No</label>
+        <input type="text" id="f-serial" class="mono" placeholder="Número de série" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="f-pin">Pin</label>
+        <input type="text" id="f-pin" class="mono" placeholder="PIN" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="f-user">User</label>
+        <input type="text" id="f-user" class="mono" placeholder="Utilizador" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="f-pass">Pass</label>
+        <input type="text" id="f-pass" class="mono" placeholder="Palavra-passe" autocomplete="off">
+      </div>
+    </div>
+    <div class="actions">
+      <button type="button" id="cancelEdit" style="display:none;">Cancelar</button>
+      <button type="button" class="primary" id="saveBtn">Guardar registo</button>
+    </div>
+    <div class="status" id="statusMsg">Guardado</div>
+  </div>
+
+  <div class="panel">
+    <p class="panel-title">Histórico</p>
+    <div class="toolbar">
+      <input type="text" id="searchBox" placeholder="Pesquisar por nome, NIF ou serial...">
+      <button type="button" id="exportBtn">Exportar CSV</button>
+      <button type="button" id="exportXlsxBtn">Exportar Excel</button>
+    </div>
+    <div id="tableWrap"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
+<script>
+let records = [];
+const DEFAULT_SYNC_URL = 'https://script.google.com/macros/s/AKfycbz8ELbSDBMbEOwXNUCcEZyOSp9PJsFFF0crGo_dJPVvqs5LCN89yxhG-mG3weNB3oAaSA/exec';
+let syncUrl = '';
+const SYNC_KEY = 'sheets-sync-url';
+
+async function loadSyncUrl() {
+  try {
+    const stored = localStorage.getItem(SYNC_KEY);
+    syncUrl = stored || '';
+  } catch (e) {
+    syncUrl = '';
+  }
+  if (!syncUrl) {
+    syncUrl = DEFAULT_SYNC_URL;
+    try { localStorage.setItem(SYNC_KEY, syncUrl); } catch (e) {}
+  }
+  document.getElementById('f-syncurl').value = syncUrl;
+  updateSyncStatus();
+}
+
+function updateSyncStatus(msg, ok) {
+  const el = document.getElementById('syncStatus');
+  if (msg) {
+    el.textContent = msg;
+    el.style.color = ok ? 'var(--accent)' : 'var(--danger)';
+    return;
+  }
+  if (syncUrl) {
+    el.textContent = 'Ligado ao Google Sheets';
+    el.style.color = 'var(--accent)';
+  } else {
+    el.textContent = 'Não ligado';
+    el.style.color = 'var(--text-muted)';
+  }
+}
+
+async function saveSyncUrl() {
+  syncUrl = document.getElementById('f-syncurl').value.trim();
+  try {
+    localStorage.setItem(SYNC_KEY, syncUrl);
+    updateSyncStatus();
+    flashStatus('Ligação guardada');
+  } catch (e) {
+    updateSyncStatus('Erro ao guardar ligação', false);
+  }
+}
+
+async function sendToSheet(record) {
+  if (!syncUrl) return;
+  try {
+    await fetch(syncUrl, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(record)
+    });
+    updateSyncStatus('Último registo enviado ao Sheets', true);
+  } catch (e) {
+    updateSyncStatus('Falha ao enviar ao Sheets (dados ficam guardados localmente)', false);
+  }
+}
+let editingId = null;
+const STORAGE_KEY = 'client-records';
+
+function todayStr() {
+  const d = new Date();
+  return d.toISOString().slice(0,10);
+}
+document.getElementById('f-data').value = todayStr();
+
+async function loadRecords() {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    records = stored ? JSON.parse(stored) : [];
+  } catch (e) {
+    records = [];
+  }
+  render();
+}
+
+async function persist() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  } catch (e) {
+    console.error('Erro ao guardar', e);
+  }
+}
+
+function flashStatus(text) {
+  const el = document.getElementById('statusMsg');
+  el.textContent = text;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 1400);
+}
+
+function clearForm() {
+  ['f-nome','f-nif','f-serial','f-pin','f-user','f-pass'].forEach(id => document.getElementById(id).value = '');
+  document.querySelectorAll('.field.autofilled').forEach(el => el.classList.remove('autofilled'));
+  document.getElementById('photoPreview').style.display = 'none';
+  document.getElementById('photoStatus').textContent = '';
+  document.getElementById('f-empresa').value = 'InforPos';
+  document.getElementById('f-data').value = todayStr();
+  editingId = null;
+  document.getElementById('formTitle').textContent = 'Novo registo';
+  document.getElementById('cancelEdit').style.display = 'none';
+  document.getElementById('saveBtn').textContent = 'Guardar registo';
+}
+
+async function saveRecord() {
+  const nome = document.getElementById('f-nome').value.trim();
+  const empresa = document.getElementById('f-empresa').value;
+  const nif = document.getElementById('f-nif').value.trim();
+  const serial = document.getElementById('f-serial').value.trim();
+  const pin = document.getElementById('f-pin').value.trim();
+  const user = document.getElementById('f-user').value.trim();
+  const pass = document.getElementById('f-pass').value.trim();
+  const data = document.getElementById('f-data').value;
+
+  if (!nome) {
+    document.getElementById('f-nome').focus();
+    return;
+  }
+
+  if (editingId) {
+    const idx = records.findIndex(r => r.id === editingId);
+    if (idx !== -1) {
+      records[idx] = { ...records[idx], nome, empresa, nif, serial, pin, user, pass, data };
+    }
+  } else {
+    records.unshift({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+      nome, empresa, nif, serial, pin, user, pass, data
+    });
+  }
+  await persist();
+  clearForm();
+  render();
+  flashStatus('Salvo');
+  sendToSheet({ data, nome, empresa, nif, serial, pin, user, pass });
+}
+
+function editRecord(id) {
+  const r = records.find(x => x.id === id);
+  if (!r) return;
+  document.getElementById('f-nome').value = r.nome || '';
+  document.getElementById('f-empresa').value = r.empresa || 'InforPos';
+  document.getElementById('f-nif').value = r.nif || '';
+  document.getElementById('f-serial').value = r.serial || '';
+  document.getElementById('f-pin').value = r.pin || '';
+  document.getElementById('f-user').value = r.user || '';
+  document.getElementById('f-pass').value = r.pass || '';
+  document.getElementById('f-data').value = r.data || todayStr();
+  editingId = id;
+  document.getElementById('formTitle').textContent = 'A editar registo';
+  document.getElementById('cancelEdit').style.display = 'inline-block';
+  document.getElementById('saveBtn').textContent = 'Atualizar registo';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function deleteRecord(id) {
+  records = records.filter(r => r.id !== id);
+  await persist();
+  render();
+}
+
+function escapeHtml(s) {
+  return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function formatDate(d) {
+  if (!d) return '—';
+  const [y,m,day] = d.split('-');
+  return day + '/' + m + '/' + y;
+}
+
+function render() {
+  const search = document.getElementById('searchBox').value.trim().toLowerCase();
+  const filtered = records.filter(r => {
+    if (!search) return true;
+    return (r.nome||'').toLowerCase().includes(search)
+      || (r.nif||'').toLowerCase().includes(search)
+      || (r.serial||'').toLowerCase().includes(search);
+  });
+
+  document.getElementById('countLabel').textContent = records.length + (records.length === 1 ? ' registo' : ' registos');
+
+  const wrap = document.getElementById('tableWrap');
+  if (filtered.length === 0) {
+    wrap.innerHTML = '<div class="empty">' + (records.length === 0 ? 'Ainda sem registos. Preenche o formulário acima.' : 'Nenhum resultado para a pesquisa.') + '</div>';
+    return;
+  }
+
+  let rows = filtered.map((r, i) => {
+    const n = String(records.length - records.indexOf(r)).padStart(3, '0');
+    return '<tr>' +
+      '<td class="rec-id">#' + n + '</td>' +
+      '<td>' + escapeHtml(r.nome) + '</td>' +
+      '<td>' + escapeHtml(r.empresa || '—') + '</td>' +
+      '<td class="mono-cell">' + escapeHtml(r.nif || '—') + '</td>' +
+      '<td class="mono-cell">' + escapeHtml(r.serial || '—') + '</td>' +
+      '<td class="mono-cell">' + escapeHtml(r.pin || '—') + '</td>' +
+      '<td class="mono-cell">' + escapeHtml(r.user || '—') + '</td>' +
+      '<td class="mono-cell">' + escapeHtml(r.pass || '—') + '</td>' +
+      '<td>' + formatDate(r.data) + '</td>' +
+      '<td><div class="row-actions">' +
+        '<button type="button" class="icon-btn" data-edit="' + r.id + '">editar</button>' +
+        '<button type="button" class="icon-btn del" data-del="' + r.id + '">eliminar</button>' +
+      '</div></td>' +
+    '</tr>';
+  }).join('');
+
+  wrap.innerHTML = '<table><thead><tr>' +
+    '<th></th><th>Nome</th><th>Empresa</th><th>NIF</th><th>Serial No</th><th>Pin</th><th>User</th><th>Pass</th><th>Data</th><th></th>' +
+    '</tr></thead><tbody>' + rows + '</tbody></table>';
+
+  wrap.querySelectorAll('[data-edit]').forEach(btn => {
+    btn.addEventListener('click', () => editRecord(btn.getAttribute('data-edit')));
+  });
+  wrap.querySelectorAll('[data-del]').forEach(btn => {
+    btn.addEventListener('click', () => deleteRecord(btn.getAttribute('data-del')));
+  });
+}
+
+function exportCsv() {
+  const header = ['Nome do Cliente','Empresa','NIF','Serial No','Pin','User','Pass','Data'];
+  const lines = [header.join(';')];
+  records.forEach(r => {
+    lines.push([r.nome, r.empresa, r.nif, r.serial, r.pin, r.user, r.pass, formatDate(r.data)]
+      .map(v => '"' + (v || '').replace(/"/g,'""') + '"').join(';'));
+  });
+  const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'registo-clientes.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportXlsx() {
+  const header = ['Data','Nome do Cliente','Empresa','NIF','Serial No','Pin','User','Pass'];
+  const rows = records.map(r => [formatDate(r.data), r.nome, r.empresa, r.nif, r.serial, r.pin, r.user, r.pass]);
+  const sheetData = [header, ...rows];
+  const ws = XLSX.utils.aoa_to_sheet(sheetData);
+  ws['!cols'] = [{wch:12},{wch:28},{wch:14},{wch:14},{wch:16},{wch:10},{wch:14},{wch:14}];
+  ws['!autofilter'] = { ref: 'A1:H' + sheetData.length };
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Registo de Clientes');
+  const stamp = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, 'registo-clientes-' + stamp + '.xlsx');
+}
+
+document.getElementById('saveBtn').addEventListener('click', saveRecord);
+document.getElementById('cancelEdit').addEventListener('click', clearForm);
+document.getElementById('exportBtn').addEventListener('click', exportCsv);
+document.getElementById('exportXlsxBtn').addEventListener('click', exportXlsx);
+document.getElementById('searchBox').addEventListener('input', render);
+document.getElementById('saveSyncUrl').addEventListener('click', saveSyncUrl);
+
+// --- Leitura de etiqueta por foto (OCR) ---
+document.getElementById('photoBtn').addEventListener('click', () => {
+  document.getElementById('photoInput').click();
+});
+
+document.getElementById('photoInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const preview = document.getElementById('photoPreview');
+  const statusEl = document.getElementById('photoStatus');
+  preview.src = URL.createObjectURL(file);
+  preview.style.display = 'block';
+  statusEl.textContent = 'A ler a etiqueta... isto pode demorar alguns segundos';
+  statusEl.className = 'photo-status working';
+
+  try {
+    const result = await Tesseract.recognize(file, 'eng', {});
+    const text = result.data.text || '';
+    const found = extractFieldsFromText(text);
+    applyExtractedFields(found);
+
+    const foundCount = Object.keys(found).length;
+    if (foundCount > 0) {
+      statusEl.textContent = 'Preenchido automaticamente: ' + Object.keys(found).join(', ') + '. Confere antes de guardar.';
+      statusEl.className = 'photo-status';
+    } else {
+      statusEl.textContent = 'Não consegui identificar os campos na foto. Preenche manualmente.';
+      statusEl.className = 'photo-status error';
+    }
+  } catch (err) {
+    statusEl.textContent = 'Erro ao processar a imagem. Tenta outra foto ou preenche manualmente.';
+    statusEl.className = 'photo-status error';
+  }
+});
+
+function extractFieldsFromText(text) {
+  const found = {};
+  const patterns = {
+    serial: /SERIAL\s*(?:NO\.?|NUMBER)?[:\s]*([A-Z0-9\-]{3,})/i,
+    pin: /\bPIN[:\s]*([A-Z0-9]{2,})/i,
+    user: /\bUSER[:\s]*([A-Z0-9\-]{2,})/i,
+    pass: /\bPASS(?:WORD)?[:\s]*([A-Z0-9\-]{2,})/i
+  };
+  for (const key in patterns) {
+    const m = text.match(patterns[key]);
+    if (m && m[1]) {
+      found[key] = m[1].trim();
+    }
+  }
+  return found;
+}
+
+function applyExtractedFields(found) {
+  const map = { serial: 'f-serial', pin: 'f-pin', user: 'f-user', pass: 'f-pass' };
+  for (const key in map) {
+    const input = document.getElementById(map[key]);
+    const fieldWrap = input.closest('.field');
+    fieldWrap.classList.remove('autofilled');
+    if (found[key]) {
+      input.value = found[key];
+      fieldWrap.classList.add('autofilled');
+    }
+  }
+}
+
+loadRecords();
+loadSyncUrl();
+</script>
+</body>
+</html>
