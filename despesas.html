@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Despesas — Registo Mensal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1b201e;
+    --paper:#f6f4ee;
+    --paper-dim:#ece8dd;
+    --teal:#2f6f5e;
+    --teal-dark:#204c40;
+    --amber:#d9a441;
+    --red:#b3452f;
+    --line:#c9c3b2;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:var(--ink);
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(47,111,94,0.25), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(217,164,65,0.12), transparent 45%);
+    font-family:'Inter',sans-serif;
+    color:var(--ink);
+    display:flex;
+    justify-content:center;
+    padding:28px 14px 60px;
+  }
+  .receipt{
+    width:100%;
+    max-width:420px;
+    background:var(--paper);
+    border-radius:2px;
+    position:relative;
+    box-shadow:0 30px 60px rgba(0,0,0,0.45);
+    padding:26px 22px 30px;
+    overflow:hidden;
+  }
+  .watermark{
+    position:absolute;
+    top:50%; left:50%;
+    transform:translate(-50%,-50%) rotate(-28deg);
+    font-family:'IBM Plex Mono',monospace;
+    font-weight:700;
+    font-size:120px;
+    letter-spacing:.05em;
+    color:var(--teal-dark);
+    opacity:0.055;
+    pointer-events:none;
+    user-select:none;
+    white-space:nowrap;
+    z-index:0;
+  }
+  .receipt > *:not(.watermark){
+    position:relative;
+    z-index:1;
+  }
+  .receipt::before, .receipt::after{
+    content:"";
+    position:absolute;
+    left:0; right:0;
+    height:10px;
+    background:
+      radial-gradient(circle at 8px 0, transparent 7px, var(--ink) 7px) 0 -4px / 16px 10px repeat-x;
+  }
+  .receipt::before{ top:-9px; transform:rotate(180deg);}
+  .receipt::after{ bottom:-9px; }
+
+  .brand{
+    display:block;
+    margin:0 auto 10px;
+    max-width:170px;
+    width:100%;
+    height:auto;
+  }
+  h1{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:20px;
+    text-align:center;
+    margin:0 0 4px;
+    letter-spacing:.02em;
+  }
+  .sub{
+    text-align:center;
+    font-size:12.5px;
+    color:#63665f;
+    margin-bottom:20px;
+  }
+  .dashed{
+    border:none;
+    border-top:1.5px dashed var(--line);
+    margin:18px 0;
+  }
+
+  label{
+    display:block;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--teal-dark);
+    margin-bottom:6px;
+    margin-top:16px;
+  }
+  select, input, textarea{
+    width:100%;
+    padding:11px 12px;
+    font-size:15px;
+    font-family:'Inter',sans-serif;
+    border:1.5px solid var(--line);
+    border-radius:6px;
+    background:#fff;
+    color:var(--ink);
+  }
+  input[name="valor"]{
+    font-family:'IBM Plex Mono',monospace;
+    font-weight:600;
+    font-size:18px;
+  }
+  select:focus, input:focus, textarea:focus{
+    outline:2px solid var(--teal);
+    outline-offset:1px;
+    border-color:var(--teal);
+  }
+  textarea{ resize:vertical; min-height:50px; }
+
+  .scan-block{
+    margin-top:18px;
+    border:1.5px dashed var(--line);
+    border-radius:10px;
+    padding:14px;
+    background:rgba(47,111,94,0.05);
+  }
+  .scan-title{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px;
+    letter-spacing:.06em;
+    color:var(--teal-dark);
+    text-transform:uppercase;
+    margin-bottom:10px;
+  }
+  .scan-buttons{ display:flex; gap:8px; }
+  .btn-secondary{
+    flex:1;
+    padding:10px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px;
+    letter-spacing:.03em;
+    border-radius:6px;
+    border:1.5px solid var(--teal);
+    background:#fff;
+    color:var(--teal-dark);
+    cursor:pointer;
+  }
+  .btn-secondary:active{ background:var(--paper-dim); }
+
+  #video{
+    width:100%;
+    border-radius:8px;
+    margin-top:10px;
+    display:none;
+    background:#000;
+  }
+  #scanStatus{
+    font-size:12.5px;
+    margin-top:8px;
+    min-height:16px;
+    color:var(--teal-dark);
+  }
+  #scanStatus.err{ color:var(--red); }
+
+  .submit{
+    width:100%;
+    margin-top:26px;
+    padding:15px;
+    font-family:'IBM Plex Mono',monospace;
+    font-weight:600;
+    font-size:14.5px;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+    background:var(--teal);
+    color:#fff;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    transition:background .15s;
+  }
+  .submit:active{ background:var(--teal-dark); }
+  .submit:disabled{ background:#9aa39d; cursor:not-allowed; }
+
+  .total-line{
+    display:flex;
+    justify-content:space-between;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:#63665f;
+    margin-top:10px;
+  }
+  #toast{
+    position:fixed;
+    left:50%; bottom:24px;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    padding:12px 18px;
+    border-radius:8px;
+    opacity:0;
+    transition:all .25s;
+    pointer-events:none;
+    max-width:90vw;
+    text-align:center;
+  }
+  #toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  #toast.err{ background:var(--red); }
+
+  .config-note{
+    font-size:11px;
+    color:#8a8d85;
+    text-align:center;
+    margin-top:18px;
+    font-family:'IBM Plex Mono',monospace;
+  }
+</style>
+</head>
+<body>
+
+<div class="receipt">
+  <div class="watermark">G.I</div>
+  <img class="brand" src="data:image/png;base64,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" alt="Inforpos">
+  <h1>REGISTO DE DESPESAS</h1>
+  <div class="sub">aponta a fatura, confirma os dados, envia</div>
+  <hr class="dashed">
+
+  <form id="expenseForm">
+    <label for="tecnico">Técnico</label>
+    <select id="tecnico" name="tecnico" required>
+      <option value="" disabled selected>Escolhe o teu nome</option>
+      <option>Gabriel Isac</option>
+      <option>Ricardo Matos</option>
+      <option>Mariana Santos</option>
+      <option>Fausto</option>
+      <option>João Esteves</option>
+    </select>
+
+    <div class="scan-block">
+      <div class="scan-title">Ler fatura</div>
+      <div class="scan-buttons">
+        <button type="button" class="btn-secondary" id="btnCamera">📷 Abrir câmara</button>
+        <button type="button" class="btn-secondary" id="btnUpload">🖼️ Escolher foto</button>
+      </div>
+      <input type="file" id="fileInput" accept="image/*" style="display:none">
+      <video id="video" playsinline autoplay muted></video>
+      <canvas id="canvas" style="display:none"></canvas>
+      <div id="scanStatus"></div>
+    </div>
+
+    <label for="data">Data</label>
+    <input type="date" id="data" name="data" required>
+
+    <label for="valor">Valor (€)</label>
+    <input type="number" id="valor" name="valor" step="0.01" min="0" inputmode="decimal" placeholder="0.00" required>
+
+    <label for="categoria">Categoria</label>
+    <select id="categoria" name="categoria" required>
+      <option value="" disabled selected>Escolhe uma categoria</option>
+      <option>Combustível</option>
+      <option>Portagens</option>
+      <option>Estacionamento</option>
+      <option>Ferramentas / Leroy Merlin</option>
+      <option>Material / Peças</option>
+      <option>Refeição</option>
+      <option>Alojamento</option>
+      <option>Outro</option>
+    </select>
+
+    <label for="descricao">Descrição (opcional)</label>
+    <textarea id="descricao" name="descricao" placeholder="Ex: cliente X, nº da fatura, etc."></textarea>
+
+    <button type="submit" class="submit" id="submitBtn">Registar despesa</button>
+    <div class="total-line"><span>registos enviados nesta sessão</span><span id="sessionCount">0</span></div>
+  </form>
+
+  <div class="config-note">v1.0 · sincroniza com Google Sheets</div>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.js"></script>
+<script>
+/* ======================================================
+   CONFIGURAÇÃO — cola aqui o URL do teu Google Apps Script
+   Web App depois de fazeres o deploy (ver instruções enviadas).
+   ====================================================== */
+const SCRIPT_URL = "COLA_AQUI_O_URL_DO_APPS_SCRIPT";
+
+let sessionCount = 0;
+
+// ---------- Toast ----------
+function toast(msg, isErr){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = isErr ? 'show err' : 'show';
+  setTimeout(()=>{ t.className=''; }, 3200);
+}
+
+// ---------- Verificar suporte do browser ----------
+const jsQRReady = typeof jsQR !== 'undefined';
+const cameraSupported = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+
+if(!jsQRReady){
+  scanFailed('Não foi possível carregar o leitor de QR code (sem ligação à internet?). Preenche os campos manualmente.');
+  document.getElementById('btnCamera').disabled = true;
+  document.getElementById('btnUpload').disabled = true;
+}
+
+// ---------- Utilitário: reduzir imagens grandes antes de ler o QR ----------
+// Fotos de telemóvel modernas (12MP+) podem ultrapassar o limite de canvas
+// de alguns browsers (sobretudo Safari/iOS) e tornam a leitura lenta ou
+// falhada. Reduzimos sempre para uma largura máxima antes de descodificar.
+function drawScaled(source, sourceWidth, sourceHeight, maxDim){
+  let w = sourceWidth, h = sourceHeight;
+  if(w > maxDim || h > maxDim){
+    const ratio = Math.min(maxDim / w, maxDim / h);
+    w = Math.round(w * ratio);
+    h = Math.round(h * ratio);
+  }
+  const canvas = document.getElementById('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(source, 0, 0, w, h);
+  return ctx.getImageData(0, 0, w, h);
+}
+
+function decodeImageData(imgData, options){
+  try{
+    return jsQR(imgData.data, imgData.width, imgData.height, options);
+  }catch(err){
+    return null;
+  }
+}
+
+// ---------- Data por omissão = hoje ----------
+document.getElementById('data').valueAsDate = new Date();
+
+// ---------- Parser do QR code da fatura portuguesa ----------
+// Formato: A:...*B:...*F:20260806*...*O:12.50*...
+function parseFaturaQR(text){
+  const result = {};
+  text.split('*').forEach(part=>{
+    const idx = part.indexOf(':');
+    if(idx === -1) return;
+    const key = part.substring(0, idx);
+    const val = part.substring(idx+1);
+    result[key] = val;
+  });
+  const out = {};
+  if(result['F'] && /^\d{8}$/.test(result['F'])){
+    const y = result['F'].substring(0,4), m = result['F'].substring(4,6), d = result['F'].substring(6,8);
+    out.data = `${y}-${m}-${d}`;
+  }
+  if(result['O']){
+    const v = parseFloat(result['O'].replace(',','.'));
+    if(!isNaN(v)) out.valor = v;
+  } else if(result['N']){
+    const v = parseFloat(result['N'].replace(',','.'));
+    if(!isNaN(v)) out.valor = v;
+  }
+  return (out.data || out.valor) ? out : null;
+}
+
+function applyScan(parsed){
+  if(parsed.data) document.getElementById('data').value = parsed.data;
+  if(parsed.valor) document.getElementById('valor').value = parsed.valor.toFixed(2);
+  const el = document.getElementById('scanStatus');
+  el.className = '';
+  el.textContent = '✓ Dados lidos do QR code — confirma antes de enviar.';
+  toast('QR code lido com sucesso');
+}
+
+function scanFailed(msgOverride){
+  const el = document.getElementById('scanStatus');
+  el.className = 'err';
+  el.textContent = msgOverride || 'Não foi possível ler o QR code. Preenche os campos manualmente.';
+}
+
+// ---------- Ler QR a partir de ficheiro/foto ----------
+document.getElementById('btnUpload').addEventListener('click', ()=>{
+  if(!jsQRReady) return;
+  document.getElementById('fileInput').click();
+});
+document.getElementById('fileInput').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const img = new Image();
+  img.onload = ()=>{
+    // até 2000px de lado maior — mais do que suficiente para ler o QR
+    // e evita falhas de canvas em imagens muito grandes no Safari/iOS
+    const imgData = drawScaled(img, img.naturalWidth, img.naturalHeight, 2000);
+    const code = decodeImageData(imgData, { inversionAttempts: 'attemptBoth' });
+    if(code){
+      const parsed = parseFaturaQR(code.data);
+      if(parsed) applyScan(parsed);
+      else scanFailed('QR code lido, mas não é uma fatura reconhecida. Preenche manualmente.');
+    } else {
+      scanFailed();
+    }
+    URL.revokeObjectURL(img.src);
+  };
+  img.onerror = ()=>{
+    scanFailed('Não foi possível abrir esta imagem. Tenta outra foto.');
+  };
+  img.src = URL.createObjectURL(file);
+  // permite escolher a mesma foto outra vez sem o browser ignorar o evento
+  e.target.value = '';
+});
+
+// ---------- Ler QR ao vivo pela câmara ----------
+let stream = null, scanning = false;
+const video = document.getElementById('video');
+const btnCamera = document.getElementById('btnCamera');
+video.muted = true;
+video.playsInline = true;
+
+if(!cameraSupported){
+  btnCamera.disabled = true;
+}
+
+btnCamera.addEventListener('click', async ()=>{
+  if(!jsQRReady) return;
+  if(scanning){ stopCamera(); return; }
+  if(!cameraSupported){
+    scanFailed('Este browser não permite aceder à câmara aqui. Usa "Escolher foto" em alternativa.');
+    return;
+  }
+  const constraintsList = [
+    { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } },
+    { video: true }
+  ];
+  let lastErr = null;
+  for(const constraints of constraintsList){
+    try{
+      stream = await navigator.mediaDevices.getUserMedia(constraints);
+      lastErr = null;
+      break;
+    }catch(err){
+      lastErr = err;
+    }
+  }
+  if(lastErr){
+    if(lastErr.name === 'NotAllowedError'){
+      scanFailed('Permissão da câmara negada. Autoriza o acesso nas definições do browser.');
+    }else{
+      scanFailed('Sem acesso à câmara. Usa "Escolher foto" em alternativa.');
+    }
+    return;
+  }
+  try{
+    video.srcObject = stream;
+    video.style.display = 'block';
+    await video.play();
+    scanning = true;
+    btnCamera.textContent = '✕ Fechar câmara';
+    requestAnimationFrame(tickCamera);
+  }catch(err){
+    scanFailed('Não foi possível iniciar a câmara. Usa "Escolher foto" em alternativa.');
+    stopCamera();
+  }
+});
+
+function stopCamera(){
+  scanning = false;
+  if(stream){ stream.getTracks().forEach(t=>t.stop()); stream = null; }
+  video.srcObject = null;
+  video.style.display = 'none';
+  btnCamera.textContent = '📷 Abrir câmara';
+}
+
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden && scanning) stopCamera();
+});
+
+function tickCamera(){
+  if(!scanning) return;
+  if(video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth > 0){
+    const imgData = drawScaled(video, video.videoWidth, video.videoHeight, 900);
+    const code = decodeImageData(imgData, { inversionAttempts: 'attemptBoth' });
+    if(code){
+      const parsed = parseFaturaQR(code.data);
+      if(parsed){
+        applyScan(parsed);
+        stopCamera();
+        return;
+      }
+    }
+  }
+  requestAnimationFrame(tickCamera);
+}
+
+// ---------- Submeter ----------
+document.getElementById('expenseForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  if(SCRIPT_URL.includes('COLA_AQUI')){
+    toast('Falta configurar o URL do Google Apps Script no código.', true);
+    return;
+  }
+  const btn = document.getElementById('submitBtn');
+  const payload = {
+    tecnico: document.getElementById('tecnico').value,
+    data: document.getElementById('data').value,
+    valor: parseFloat(document.getElementById('valor').value),
+    categoria: document.getElementById('categoria').value,
+    descricao: document.getElementById('descricao').value
+  };
+  btn.disabled = true;
+  btn.textContent = 'A enviar...';
+  try{
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+    sessionCount++;
+    document.getElementById('sessionCount').textContent = sessionCount;
+    toast(`Despesa registada — ${payload.tecnico}`);
+    document.getElementById('expenseForm').reset();
+    document.getElementById('data').valueAsDate = new Date();
+    document.getElementById('scanStatus').textContent = '';
+    stopCamera();
+  }catch(err){
+    toast('Erro ao enviar. Verifica a ligação e tenta novamente.', true);
+  }finally{
+    btn.disabled = false;
+    btn.textContent = 'Registar despesa';
+  }
+});
+</script>
+</body>
+</html>
